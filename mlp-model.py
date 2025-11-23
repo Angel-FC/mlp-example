@@ -5,9 +5,10 @@ All hyperparameters of the MLPClassifier are explicitly included and commented.
 """
 
 from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, learning_curve
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+import matplotlib.pyplot as plt
 
 # ============================
 # 1. Load a public dataset (Iris)
@@ -118,9 +119,46 @@ clf.fit(X_train, y_train)
 # ============================
 # 4. Evaluate model performance
 # ============================
-print("\nCONFUSION MATRIX:")
-print(confusion_matrix(y_test, clf.predict(X_test)))
 
+# Predictions
+y_pred = clf.predict(X_test)
+y_prob = clf.predict_proba(X_test)   # For ROC-AUC
+
+# CONFUSION MATRIX
+print("\nCONFUSION MATRIX:")
+print(confusion_matrix(y_test, y_pred))
+
+# CLASSIFICATION REPORT (precision, recall, f1-score…)
 print("\nCLASSIFICATION REPORT:")
-print(classification_r_
+print(classification_report(y_test, y_pred))
+
+# ROC-AUC
+roc_per_class = roc_auc_score(y_test, y_prob, multi_class="ovr") # ovr = One vs Rest. Mean of 0, 1, 2 vs rest.
+print("\nROC-AUC SCORE (OVR):", roc_per_class)
       
+# Individual AUCs
+class_names = data.target_names
+for i in range(len(class_names)):
+    auc_class = roc_auc_score((y_test == i).astype(int), y_prob[:, i])
+    print(f"AUC for class {class_names[i]}: {auc_class:.3f}")
+
+
+# ============================
+# 5. LEARNING CURVE
+# ============================
+train_sizes, train_scores, test_scores = learning_curve(
+    clf, X, y, cv=5, scoring="accuracy"
+)
+plt.plot(train_sizes, train_scores.mean(axis=1), label="Train")
+plt.plot(train_sizes, test_scores.mean(axis=1), label="Validation")
+plt.title("Learning Curve – MLPClassifier")
+plt.xlabel("Training Size")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.show()
+
+
+# The learning curve shows that the model clearly overfits when the training size is small.
+# However, as more data is provided, both training and validation scores converge,
+# indicating that the model starts to generalize well and learns real patterns.
+# Therefore, having enough amount of data is essential for achieving good performance with MLP.
