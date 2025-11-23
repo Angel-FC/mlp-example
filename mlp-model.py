@@ -74,7 +74,7 @@ clf = MLPClassifier(
     tol=1e-4,
     # Minimum improvement required to continue training.
 
-    verbose=True,
+    verbose=False,
     # Print training progress.
 
     warm_start=False,
@@ -135,13 +135,6 @@ print(classification_report(y_test, y_pred))
 # ROC-AUC
 roc_per_class = roc_auc_score(y_test, y_prob, multi_class="ovr") # ovr = One vs Rest. Mean of 0, 1, 2 vs rest.
 print("\nROC-AUC SCORE (OVR):", roc_per_class)
-      
-# Individual AUCs
-class_names = data.target_names
-for i in range(len(class_names)):
-    auc_class = roc_auc_score((y_test == i).astype(int), y_prob[:, i])
-    print(f"AUC for class {class_names[i]}: {auc_class:.3f}")
-
 
 # ============================
 # 5. LEARNING CURVE
