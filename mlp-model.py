@@ -1,157 +1,248 @@
 """
-Example of MLPClassifier (Multi-Layer Perceptron) using the built-in Iris dataset.
-This script trains, evaluates, and prints model performance.
-All hyperparameters of the MLPClassifier are explicitly included and commented.
+--------------------------------------------------------------------------
+DETAILED MLP CLASSIFIER EXAMPLE 
+--------------------------------------------------------------------------
+
+This script trains an MLPClassifier (Multi-Layer Perceptron Neural Network)
+using the public Iris dataset available directly inside scikit-learn.
+
 """
 
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split, learning_curve
-from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
-import matplotlib.pyplot as plt
+# =======================================================================
+# 0. IMPORT ALL REQUIRED LIBRARIES
+# =======================================================================
 
-# ============================
-# 1. Load a public dataset (Iris)
-# ============================
+# Dataset loader
+from sklearn.datasets import load_iris
+
+# Training/testing split
+from sklearn.model_selection import train_test_split
+
+# MLP neural network classifier
+from sklearn.neural_network import MLPClassifier
+
+# Evaluation metrics
+from sklearn.metrics import classification_report, confusion_matrix
+
+
+# =======================================================================
+# 1. LOAD A PUBLIC DATASET (IRIS)
+# =======================================================================
+
+"""
+load_iris() loads the classical Iris Flower dataset.
+It contains:
+- 150 samples (rows)
+- 4 numerical features (columns):
+    * Sepal Length
+    * Sepal Width
+    * Petal Length
+    * Petal Width
+- 3 classes of iris species:
+    * 0 → Setosa
+    * 1 → Versicolor
+    * 2 → Virginica
+"""
+
 data = load_iris()
+
+# Feature matrix (shape: 150 x 4)
 X = data.data
+
+# Target labels (shape: 150)
 y = data.target
 
-# Split dataset into training/testing
+print("Dataset loaded successfully.")
+print("Shape of feature matrix X:", X.shape)
+print("Shape of target vector y:", y.shape)
+
+
+# =======================================================================
+# 2. SPLIT THE DATA INTO TRAINING AND TESTING SETS
+# =======================================================================
+
+"""
+We split the dataset so we can evaluate generalization:
+- Training set: 70% (105 samples)
+- Test set:     30% (45 samples)
+
+stratify=y ensures each class appears proportionally in both sets.
+
+random_state=42 ensures reproducibility:
+    every time you run the code, you get the same split.
+"""
+
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.3, random_state=42, stratify=y
+    X, y,
+    test_size=0.3,
+    random_state=42,
+    stratify=y
 )
 
-# ============================
-# 2. Define MLPClassifier with ALL PARAMETERS + EXPLANATIONS
-# ============================
+print("\nData split complete.")
+print("Training samples:", len(X_train))
+print("Testing samples:", len(X_test))
+
+
+# =======================================================================
+# 3. DEFINE THE MLP CLASSIFIER (EXPLAIN EVERY PARAMETER)
+# =======================================================================
+
+"""
+MLPClassifier trains a fully connected feed-forward artificial neural network.
+
+Below we specify EVERY MAJOR PARAMETER.
+"""
 
 clf = MLPClassifier(
-    # ----- NETWORK ARCHITECTURE -----
+    # ------------------------------------------------------------------
+    # (A) HIDDEN LAYER ARCHITECTURE
+    # ------------------------------------------------------------------
     hidden_layer_sizes=(100, 50),
-    # Number of neurons in each hidden layer.
-    # Here: 2 hidden layers, with 100 and 50 neurons.
+    # Defines the network architecture:
+    # - The tuple means: 2 hidden layers.
+    # - First hidden layer → 100 neurons.
+    # - Second hidden layer → 50 neurons.
+    # More layers/neurons = more representational power but risk of overfitting.
 
+    # ------------------------------------------------------------------
+    # (B) ACTIVATION FUNCTION FOR EACH NEURON
+    # ------------------------------------------------------------------
     activation='relu',
-    # Activation function for hidden layers:
-    # 'identity', 'logistic', 'tanh', 'relu'.
+    # Activation function applied to each hidden layer:
+    # Options: 'identity', 'logistic', 'tanh', 'relu'.
+    # RELU is common: trains fast and helps with vanishing gradient issues.
 
+    # ------------------------------------------------------------------
+    # (C) SOLVER (OPTIMIZATION ALGORITHM)
+    # ------------------------------------------------------------------
     solver='adam',
-    # Optimization algorithm:
-    # 'lbfgs' – good for small datasets
-    # 'sgd' – stochastic gradient descent
-    # 'adam' – recommended for most cases
+    # Optimization algorithm used to update the network weights:
+    # 'lbfgs' (quasi-Newton, good for small datasets),
+    # 'sgd' (stochastic gradient descent),
+    # 'adam' (adaptive moment estimation, robust default).
 
-    # ----- REGULARIZATION -----
+    # ------------------------------------------------------------------
+    # (D) REGULARIZATION TO PREVENT OVERFITTING
+    # ------------------------------------------------------------------
     alpha=0.0001,
-    # L2 regularization term to prevent overfitting.
+    # L2 regularization strength (weight decay). Higher alpha => stronger regularization.
 
-    # ----- LEARNING SETTINGS -----
+    # ------------------------------------------------------------------
+    # (E) MINI-BATCH SETTINGS
+    # ------------------------------------------------------------------
     batch_size='auto',
-    # Batch size for optimization.
-    # 'auto' = min(200, n_samples)
+    # Batch size for optimization. 'auto' -> min(200, n_samples).
 
+    # ------------------------------------------------------------------
+    # (F) LEARNING RATE STRATEGY
+    # ------------------------------------------------------------------
     learning_rate='constant',
-    # Learning rate schedule:
-    # 'constant', 'invscaling', 'adaptive'
+    # Learning rate schedule: 'constant', 'invscaling', or 'adaptive'.
 
     learning_rate_init=0.001,
-    # Initial learning rate.
+    # Initial learning rate (for 'sgd' and 'adam').
 
     power_t=0.5,
-    # Exponent for 'invscaling' learning rate schedule.
+    # Exponent for inverse scaling (used when learning_rate='invscaling').
 
-    # ----- TRAINING CONTROL -----
+    # ------------------------------------------------------------------
+    # (G) TRAINING PARAMETERS
+    # ------------------------------------------------------------------
     max_iter=500,
-    # Maximum number of training iterations (epochs).
+    # Maximum number of iterations (epochs).
 
     shuffle=True,
-    # Shuffle samples at each epoch.
+    # Shuffle samples in each epoch.
 
     random_state=42,
-    # Seed for reproducibility.
+    # Random seed for reproducible weight initialization and shuffling.
 
     tol=1e-4,
-    # Minimum improvement required to continue training.
+    # Tolerance for optimization: minimum improvement to continue.
 
-    verbose=False,
-    # Print training progress.
+    verbose=True,
+    # If true, prints progress messages during training.
 
     warm_start=False,
-    # If True, reuse the solution from previous fit() calls.
+    # If true, reuse previous solution when calling fit() again.
 
-    # ----- SGD-SPECIFIC PARAMETERS -----
+    # ------------------------------------------------------------------
+    # (H) SGD-SPECIFIC PARAMETERS (ONLY USED IF solver='sgd')
+    # ------------------------------------------------------------------
     momentum=0.9,
-    # Momentum for gradient descent updates.
+    # Momentum for gradient descent (only relevant for solver='sgd').
 
     nesterovs_momentum=True,
-    # Apply Nesterov momentum (faster convergence).
+    # Whether to use Nesterov's momentum (only for 'sgd').
 
+    # ------------------------------------------------------------------
+    # (I) EARLY STOPPING SETTINGS
+    # ------------------------------------------------------------------
     early_stopping=False,
-    # If True, use validation split to stop training early.
+    # If true, automatically stops training when validation score is not improving.
 
     validation_fraction=0.1,
-    # Fraction of training data used as validation if early_stopping=True.
+    # Fraction of training set to hold out as validation for early stopping.
 
-    # ----- ADAM-SPECIFIC PARAMETERS -----
+    # ------------------------------------------------------------------
+    # (J) ADAM OPTIMIZER INTERNAL PARAMETERS
+    # ------------------------------------------------------------------
     beta_1=0.9,
-    # Exponential decay rate for first moment estimate.
+    # Exponential decay rate for the first moment estimates (Adam).
 
     beta_2=0.999,
-    # Exponential decay rate for second moment estimate.
+    # Exponential decay rate for the second moment estimates (Adam).
 
     epsilon=1e-8,
-    # Small constant to avoid numerical division errors.
+    # Small epsilon to avoid numerical issues in Adam.
 
-    # ----- OTHER SETTINGS -----
+    # ------------------------------------------------------------------
+    # (K) CONVERGENCE BEHAVIOR
+    # ------------------------------------------------------------------
     n_iter_no_change=10,
-    # Stop training if no improvement over these many epochs.
+    # Number of epochs with no improvement to wait before stopping (if applicable).
 
     max_fun=15000
-    # Maximum number of function evaluations (for solver='lbfgs')
+    # Maximum number of function evaluations (used by 'lbfgs' solver).
 )
 
-# ============================
-# 3. Train the neural network
-# ============================
+print("\nMLP model defined with all parameters.")
+
+
+# =======================================================================
+# 4. TRAIN THE NEURAL NETWORK
+# =======================================================================
+
+"""
+The .fit() method performs:
+1. Forward propagation: compute activations through the network
+2. Backpropagation: compute gradients of the loss wrt weights
+3. Weight update using the selected optimizer (here: Adam)
+4. Repeat until convergence or max_iter
+
+Because verbose=True, training progress will be printed to the console.
+"""
+
+print("\nTraining the neural network...")
 clf.fit(X_train, y_train)
+print("\nTraining complete.")
 
-# ============================
-# 4. Evaluate model performance
-# ============================
 
-# Predictions
+# =======================================================================
+# 5. MAKE PREDICTIONS AND EVALUATE PERFORMANCE
+# =======================================================================
+
+"""
+We evaluate the trained network on the unseen test set.
+We compute a confusion matrix and a classification report
+(precision, recall, f1-score for each class).
+"""
+
 y_pred = clf.predict(X_test)
-y_prob = clf.predict_proba(X_test)   # For ROC-AUC
 
-# CONFUSION MATRIX
-print("\nCONFUSION MATRIX:")
+print("\n=========================== CONFUSION MATRIX ===========================")
 print(confusion_matrix(y_test, y_pred))
 
-# CLASSIFICATION REPORT (precision, recall, f1-score…)
-print("\nCLASSIFICATION REPORT:")
+print("\n======================== CLASSIFICATION REPORT =========================")
 print(classification_report(y_test, y_pred))
-
-# ROC-AUC
-roc_per_class = roc_auc_score(y_test, y_prob, multi_class="ovr") # ovr = One vs Rest. Mean of 0, 1, 2 vs rest.
-print("\nROC-AUC SCORE (OVR):", roc_per_class)
-
-# ============================
-# 5. LEARNING CURVE
-# ============================
-train_sizes, train_scores, test_scores = learning_curve(
-    clf, X, y, cv=5, scoring="accuracy"
-)
-plt.plot(train_sizes, train_scores.mean(axis=1), label="Train")
-plt.plot(train_sizes, test_scores.mean(axis=1), label="Validation")
-plt.title("Learning Curve – MLPClassifier")
-plt.xlabel("Training Size")
-plt.ylabel("Accuracy")
-plt.legend()
-plt.show()
-
-
-# The learning curve shows that the model clearly overfits when the training size is small.
-# However, as more data is provided, both training and validation scores converge,
-# indicating that the model starts to generalize well and learns real patterns.
-# Therefore, having enough amount of data is essential for achieving good performance with MLP.
