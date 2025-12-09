@@ -85,7 +85,7 @@ print("Testing samples:", len(X_test))
 
 
 # =======================================================================
-# 3. DEFINE THE MLP CLASSIFIER (EXPLAIN EVERY PARAMETER)
+# 3. DEFINE THE MLP CLASSIFIER 
 # =======================================================================
 
 """
@@ -246,3 +246,4 @@ print(confusion_matrix(y_test, y_pred))
 
 print("\n======================== CLASSIFICATION REPORT =========================")
 print(classification_report(y_test, y_pred))
+
